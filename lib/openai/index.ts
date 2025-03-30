@@ -4,26 +4,39 @@ import {
   batch3Schema
 } from "./schemas";
 
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || "");
+const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
 const promptSuffix = `generate travel data according to the schema and in json format,
                      do not return anything in your response outside of curly braces, 
                      generate response as per the functin schema provided. Dates given,
                      activity preference and travelling with may influence likw 50% while generating plan.`;
 
-const callOpenAIApi = (prompt: string, schema: any, description: string) => {
+const callGeminiApi = async (prompt: string, schema: any, description: string) => {
   console.log({ prompt, schema });
-  return openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      { role: "system", content: "You are a helpful travel assistant." },
-      { role: "user", content: prompt },
-    ],
-    functions: [{ name: "set_travel_details", parameters: schema, description }],
-    function_call: { name: "set_travel_details" },
-  });
+  const result = await model.generateContent([
+    "You are a helpful travel assistant. Generate travel data according to the following schema and description:",
+    description,
+    "Schema:",
+    JSON.stringify(schema),
+    "Prompt:",
+    prompt
+  ]);
+  const response = await result.response;
+  const text = response.text();
+  try {
+    // Extract JSON from the response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    throw new Error("No JSON found in response");
+  } catch (error) {
+    console.error("Error parsing Gemini response:", error);
+    throw error;
+  }
 }
 
 export const generatebatch1 = (promptText: string) => {
@@ -38,7 +51,7 @@ export const generatebatch1 = (promptText: string) => {
   
   Ensure that the function response adheres to the schema provided and is in JSON format. The response should not contain anything outside of the defined schema.
   `;
-  return callOpenAIApi(prompt, batch1Schema, description);
+  return callGeminiApi(prompt, batch1Schema, description);
 }
 
 type OpenAIInputType = {
@@ -62,7 +75,7 @@ export const generatebatch2 = (inputParams: OpenAIInputType) => {
     - An array containing items that should be included in the packing checklist for the trip.
   
   Ensure that the function response adheres to the schema provided and is in JSON format. The response should not contain anything outside of the defined schema.`;
-  return callOpenAIApi(getPropmpt(inputParams), batch2Schema, description);
+  return callGeminiApi(getPropmpt(inputParams), batch2Schema, description);
 }
 
 export const generatebatch3 = (inputParams: OpenAIInputType) => {
@@ -79,7 +92,7 @@ export const generatebatch3 = (inputParams: OpenAIInputType) => {
     - Each place includes a name and coordinates (latitude and longitude).
   
   Ensure that the function response adheres to the schema provided and is in JSON format. The response should not contain anything outside of the defined schema.`;
-  return callOpenAIApi(getPropmpt(inputParams), batch3Schema, description);
+  return callGeminiApi(getPropmpt(inputParams), batch3Schema, description);
 }
 
 const getPropmpt = ({ userPrompt, activityPreferences, companion, fromDate, toDate }: OpenAIInputType) => {

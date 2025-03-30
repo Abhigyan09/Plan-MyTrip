@@ -27,13 +27,16 @@ export const createUser = internalMutation({
     lastName: v.optional(v.string()),
   },
   async handler(ctx, { userId, email, firstName, lastName }) {
+    console.log("Creating user with data:", { userId, email, firstName, lastName });
+    
     const userRecord = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", email))
       .unique();
 
     if (userRecord === null) {
-      await ctx.db.insert("users", {
+      console.log("No existing user found, creating new user");
+      const newUser = await ctx.db.insert("users", {
         userId,
         credits: 0,
         email,
@@ -41,6 +44,15 @@ export const createUser = internalMutation({
         firstName,
         lastName,
       });
+      console.log("Created new user with credits:", { 
+        userId, 
+        freeCredits: 2,
+        _id: newUser 
+      });
+      return newUser;
+    } else {
+      console.log("User already exists:", userRecord);
+      return userRecord._id;
     }
   },
 });
@@ -49,7 +61,7 @@ export const reduceUserCreditsByOne = mutation({
   async handler(ctx) {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new ConvexError("Not Authrized to perform this action");
+      throw new ConvexError("Not Authorized to perform this action");
     }
 
     const userRecord = await userQuery(ctx, identity.subject);
@@ -58,10 +70,16 @@ export const reduceUserCreditsByOne = mutation({
         await ctx.db.patch(userRecord._id, {
           freeCredits: userRecord.freeCredits - 1,
         });
+      } else if (userRecord.credits > 0) {
+        await ctx.db.patch(userRecord._id, { 
+          credits: userRecord.credits - 1 
+        });
       } else {
-        await ctx.db.patch(userRecord._id, { credits: userRecord.credits - 1 });
+        throw new ConvexError("No credits available to create a plan");
       }
-    } else console.log("user Not found while reducing credit");
+    } else {
+      throw new ConvexError("User not found while reducing credit");
+    }
   },
 });
 
@@ -127,12 +145,26 @@ export async function userQuery(ctx: QueryCtx, clerkUserId: string) {
 }
 
 /** The current user, containing user preferences and Clerk user info. */
-export const currentUser = query((ctx: QueryCtx) => getCurrentUser(ctx));
+export const currentUser = query(async (ctx) => {
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    return null;
+  }
+  return await userQuery(ctx, identity.subject);
+});
 
 async function getCurrentUser(ctx: QueryCtx): Promise<Doc<"users"> | null> {
   const identity = await ctx.auth.getUserIdentity();
   if (identity === null) {
     return null;
   }
-  return await userQuery(ctx, identity.subject);
+  const user = await userQuery(ctx, identity.subject);
+  if (user) {
+    console.log("Current user data:", { 
+      userId: user.userId, 
+      credits: user.credits, 
+      freeCredits: user.freeCredits 
+    });
+  }
+  return user;
 }

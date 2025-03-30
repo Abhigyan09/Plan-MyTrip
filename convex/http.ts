@@ -3,6 +3,8 @@ import { httpAction } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import type { WebhookEvent } from "@clerk/backend";
 import { Webhook } from "svix";
+import { Svix } from "@clerk/backend";
+import { SvixEvent } from "@clerk/backend";
 
 export const ensureEnvironmentVariable = (name: string): string => {
   const value = process.env[name];
@@ -12,76 +14,87 @@ export const ensureEnvironmentVariable = (name: string): string => {
   return value;
 };
 
-const handleClerkWebhook = httpAction(async (ctx, request) => {
-  const event = await validateRequest(request);
-  if (!event) {
-    return new Response("Error occured", {
-      status: 400,
-    });
-  }
-  switch (event.type) {
-    case "user.created": {
-      console.log(
-        `user.created reeived from clerk for ${event.data.id} | email: ${event.data.email_addresses[0]?.email_address}`
-      );
-      await ctx.runMutation(internal.users.createUser, {
-        userId: event.data.id,
-        email: event.data.email_addresses[0]?.email_address,
-        firstName: event.data?.first_name ?? "",
-        lastName: event.data?.last_name ?? "",
-      });
-      break;
-    }
-    case "user.updated": {
-      console.log(
-        `user.updated reeived from clerk for ${event.data.id} | firstname: ${event.data?.first_name} | lastnam: ${event.data?.last_name}`
-      );
-      await ctx.runMutation(api.users.updateDisplayNameFromClerk, {
-        userId: event.data.id,
-        firstName: event.data?.first_name ?? "",
-        lastName: event.data?.last_name ?? "",
-      });
-      break;
-    }
-    default: {
-      console.log("ignored Clerk webhook event", event.type);
-    }
-  }
-  return new Response(null, {
-    status: 200,
-  });
+export default httpRouter({
+  "/clerk-webhook": httpAction({
+    method: "POST",
+    async handler(ctx, request) {
+      const WEBHOOK_SECRET = process.env.WEBHOOK_SIGNING_SECRET;
+      if (!WEBHOOK_SECRET) {
+        console.error("WEBHOOK_SIGNING_SECRET is not set");
+        return new Response("Webhook secret not configured", { status: 500 });
+      }
+
+      const payload = await request.text();
+      const headerPayload = request.headers;
+      const svix_id = headerPayload.get("svix-id");
+      const svix_timestamp = headerPayload.get("svix-timestamp");
+      const svix_signature = headerPayload.get("svix-signature");
+
+      if (!svix_id || !svix_timestamp || !svix_signature) {
+        console.error("Missing svix headers");
+        return new Response("Missing svix headers", { status: 400 });
+      }
+
+      const svix = new Svix(WEBHOOK_SECRET);
+
+      let evt: SvixEvent;
+
+      try {
+        evt = svix.verify(payload, {
+          "svix-id": svix_id,
+          "svix-timestamp": svix_timestamp,
+          "svix-signature": svix_signature,
+        }) as SvixEvent;
+      } catch (err) {
+        console.error("Error verifying webhook:", err);
+        return new Response("Error verifying webhook", { status: 400 });
+      }
+
+      const eventType = evt.type;
+      console.log("Received webhook event:", eventType);
+
+      if (eventType === "user.created") {
+        const { id, email_addresses, first_name, last_name } = evt.data;
+        console.log("Creating new user:", { id, email: email_addresses[0]?.email_address, first_name, last_name });
+
+        try {
+          const result = await ctx.runMutation(internal.users.createUser, {
+            userId: id,
+            email: email_addresses[0]?.email_address || "",
+            firstName: first_name || "",
+            lastName: last_name || "",
+          });
+          console.log("User creation result:", result);
+          return new Response("User created successfully", { status: 200 });
+        } catch (error) {
+          console.error("Error creating user:", error);
+          return new Response("Error creating user", { status: 500 });
+        }
+      }
+
+      if (eventType === "user.updated") {
+        const { id, email_addresses, first_name, last_name } = evt.data;
+        console.log("Updating user:", { id, email: email_addresses[0]?.email_address, first_name, last_name });
+
+        try {
+          const result = await ctx.runMutation(internal.users.createUser, {
+            userId: id,
+            email: email_addresses[0]?.email_address || "",
+            firstName: first_name || "",
+            lastName: last_name || "",
+          });
+          console.log("User update result:", result);
+          return new Response("User updated successfully", { status: 200 });
+        } catch (error) {
+          console.error("Error updating user:", error);
+          return new Response("Error updating user", { status: 500 });
+        }
+      }
+
+      return new Response("Webhook received", { status: 200 });
+    },
+  }),
 });
-
-const http = httpRouter();
-http.route({
-  path: "/clerk-users-webhook",
-  method: "POST",
-  handler: handleClerkWebhook,
-});
-
-async function validateRequest(
-  req: Request
-): Promise<WebhookEvent | undefined> {
-  const payloadString = await req.text();
-
-  const svixHeaders = {
-    "svix-id": req.headers.get("svix-id")!,
-    "svix-timestamp": req.headers.get("svix-timestamp")!,
-    "svix-signature": req.headers.get("svix-signature")!,
-  };
-  const clerkWebhookSecret = ensureEnvironmentVariable("CLERK_WEBHOOK_SECRET");
-
-  const wh = new Webhook(clerkWebhookSecret);
-  let evt: Event | null = null;
-  try {
-    evt = wh.verify(payloadString, svixHeaders) as Event;
-  } catch (_) {
-    console.log("error verifying");
-    return;
-  }
-
-  return evt as unknown as WebhookEvent;
-}
 
 // http.route({
 //   path: "/stripe",
@@ -146,5 +159,3 @@ http.route({
     }
   }),
 });
-
-export default http;

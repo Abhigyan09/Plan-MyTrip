@@ -1,8 +1,128 @@
 <p><a target="_blank" href="https://app.eraser.io/workspace/ITHfX2CmBRfVZimKKniY" id="edit-in-eraser-github-link"><img alt="Edit in Eraser" src="https://firebasestorage.googleapis.com/v0/b/second-petal-295822.appspot.com/o/images%2Fgithub%2FOpen%20in%20Eraser.svg?alt=media&amp;token=968381c8-a7e7-472a-8ed6-4a6626da5501"></a></p>
 
-# Travel Planner AI - Gateway to Seamless Smart Travel Plan
-Welcome to Travel Planner AI, your ultimate travel companion designed to simplify the process of planning your next adventure.
-Whether you're dreaming of a weekend getaway or a month-long expedition, Travel Planner AI is here to help you meticulously craft your next travel itinerary.
+# Travel AI Planner
+
+A modern travel planning application that uses AI to help users create personalized travel itineraries.
+
+## Features
+
+- AI-powered travel plan generation
+- User authentication with Clerk
+- Credit system for plan generation
+- Payment integration with Razorpay
+- Google Maps integration
+- Responsive design for all devices
+
+## Tech Stack
+
+- Next.js 14
+- TypeScript
+- Convex Backend
+- Clerk Authentication
+- Google AI (Gemini)
+- Razorpay Payment Gateway
+- Tailwind CSS
+
+## Prerequisites
+
+- Node.js 18+ and npm
+- Clerk account
+- Convex account
+- Google AI API key
+- Razorpay account
+- Google Maps API key
+- Unsplash API key
+- Resend API key
+
+## Environment Variables
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```env
+# Convex
+CONVEX_DEPLOYMENT=your_deployment
+NEXT_PUBLIC_CONVEX_URL=your_convex_url
+NEXT_PUBLIC_HOSTING_URL=http://localhost:3000
+CONVEX_DEPLOY_KEY=your_deploy_key
+
+# Clerk
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_publishable_key
+CLERK_SECRET_KEY=your_secret_key
+CLERK_JWT_ISSUER_DOMAIN=your_issuer_domain
+CLERK_JWT_TEMPLATE=convex
+WEBHOOK_SIGNING_SECRET=your_webhook_secret
+
+# Google AI
+GOOGLE_AI_API_KEY=your_gemini_api_key
+
+# Google Maps
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_maps_api_key
+
+# Unsplash
+UNSPLASH_ACCESS_KEY=your_unsplash_key
+
+# Resend
+RESEND_API_KEY=your_resend_key
+
+# Razorpay
+NEXT_PUBLIC_RAZORPAY_PAYMENT_PAGE_URL=your_razorpay_url
+RAZORPAY_WEBHOOK_SECRET=your_razorpay_webhook_secret
+```
+
+## Getting Started
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/travel-ai-planner.git
+cd travel-ai-planner
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Set up your environment variables in `.env.local`
+
+4. Run the development server:
+```bash
+npm run dev
+```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Deployment
+
+### Vercel Deployment
+
+1. Push your code to GitHub
+2. Connect your GitHub repository to Vercel
+3. Add your environment variables in Vercel's project settings
+4. Deploy!
+
+### Manual Deployment
+
+1. Build the application:
+```bash
+npm run build
+```
+
+2. Start the production server:
+```bash
+npm start
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Overview
 Travel Planner AI is a Software as a Service (SaaS) product that leverages cutting-edge technologies to streamline the travel planning process.

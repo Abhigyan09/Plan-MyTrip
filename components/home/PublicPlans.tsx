@@ -1,16 +1,30 @@
-import { getAuthToken } from "@/app/auth";
+"use client";
+
 import PlanCard from "@/components/dashboard/PlanCard";
 import { api } from "@/convex/_generated/api";
-import { fetchQuery } from "convex/nextjs";
+import { useQuery } from "convex/react";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
-
 import React from "react";
 
-export default async function PublicPlans() {
-  const token = await getAuthToken();
+export default function PublicPlans() {
+  const plans = useQuery(api.plan.getPublicPlans);
 
-  const plans = await fetchQuery(api.plan.getPublicPlans, {}, { token });
+  if (!plans) {
+    return (
+      <section
+        id="public-plans"
+        className="min-h-[100svh] bg-background/90 w-full flex justify-center items-end px-5 md:px-0 py-10 md:py-0"
+      >
+        <div className="flex flex-col gap-2 w-full">
+          <h2 className="text-blue-500 text-center text-lg font-bold tracking-wide">
+            Our Community's Favorite Trips
+          </h2>
+          <div className="text-center text-gray-500">Loading plans...</div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section
@@ -32,7 +46,7 @@ export default async function PublicPlans() {
                       xl:grid-cols-4 4xl:grid-cols-6
                       gap-2 p-10 justify-center"
         >
-          {plans?.map((plan) => (
+          {plans.map((plan) => (
             <PlanCard key={plan._id} plan={plan} isPublic />
           ))}
         </div>
