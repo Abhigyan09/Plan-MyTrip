@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "regions": ["bom1"],
+  "env": {
+    "NEXT_PUBLIC_CONVEX_URL": "https://earnest-dove-537.convex.cloud",
+    "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": "pk_test_YXB0LXNoZWVwLTY0LmNsZXJrLmFjY291bnRzLmRldiQ",
+    "CLERK_SECRET_KEY": "sk_test_ZVbeJsHtuSeFHu4bWxMEbpYwj3KB1F2MYQCcBNSoBF",
+    "CLERK_JWT_ISSUER_DOMAIN": "https://apt-sheep-64.clerk.accounts.dev",
+    "CLERK_JWT_TEMPLATE": "convex",
+    "GOOGLE_AI_API_KEY": "AIzaSyAxRuTdJsaA0cgzURagvsWU9E_FeKkoymo",
+    "UNSPLASH_ACCESS_KEY": "OqeY7eG2zaKb5yt3DpRg7OJoQw8ee_QnKpgPo5o9ESo",
+    "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyAGGtbg8kPJmbo7HoN2PWwxry-a7McLPCI",
+    "RESEND_API_KEY": "re_RpUC97PT_MptqADXJDkubR2xiAKVhbmBm",
+    "WEBHOOK_SIGNING_SECRET": "whsec_2Cr+p6rpGhUPYdpAp8xYk0ufVKRZS1RE",
+    "NEXT_PUBLIC_RAZORPAY_PAYMENT_PAGE_URL": "https://rzp.io/rzp/LYduRZI"
+  }
+}
