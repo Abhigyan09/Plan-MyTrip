@@ -16,7 +16,7 @@ import { formSchemaType } from "@/components/NewPlanForm";
 type PlacesAutoCompleteProps = {
   selectedFromList: boolean;
   setSelectedFromList: Dispatch<SetStateAction<boolean>>;
-  form: UseFormReturn<formSchemaType, any, undefined>;
+  form: any;
   field: ControllerRenderProps<formSchemaType, "placeName">;
 };
 
